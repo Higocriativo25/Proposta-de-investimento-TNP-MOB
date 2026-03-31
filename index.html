@@ -380,52 +380,59 @@
             box-shadow: 0 8px 20px rgba(0, 71, 171, 0.4);
         }
 
-       /* --- RESPONSIVIDADE --- */
-        @media (max-width: 992px) {
-            .hero-title { font-size: 2.2rem; }
-            .flex-grid, .flex-grid.reverse { flex-direction: column; text-align: center; }
-            .feature-list li { justify-content: center; }
-            .section-title { font-size: 2rem; }
-            nav ul { gap: 1rem; }
-        }
+       /* --- RESPONSIVIDADE AJUSTADA --- */
+@media (max-width: 992px) {
+    nav .container {
+        flex-direction: column; /* Coloca a logo em cima e a lista embaixo */
+        align-items: center;
+        gap: 10px;
+    }
 
-        @media (max-width: 768px) {
-            /* Ajuste da Capa para não sumir no topo */
-            #capa { 
-                margin-top: 0; 
-                padding-top: 40px; 
-                min-height: auto; 
-            }
+    nav ul {
+        display: flex;
+        flex-wrap: wrap; /* Permite que os links quebrem linha se necessário */
+        justify-content: center;
+        gap: 10px 15px; /* Espaçamento entre os links */
+        padding: 0;
+    }
 
-            /* Reduz a logo/foguete da abertura */
-            .hero-img { 
-                max-width: 70% !important; 
-                margin-top: 20px;
-            }
+    nav a {
+        font-size: 0.8rem; /* Diminui um pouco a fonte para caber tudo */
+    }
 
-            /* AJUSTE DAS IMAGENS INTERNAS (Garante que caibam no celular) */
-            .img-block img, 
-            .distribuicao-img, 
-            #investimento img, 
-            #regras img, 
-            section img { 
-                max-width: 90% !important; 
-                height: auto !important;
-                margin: 20px auto;
-                display: block;
-                border-radius: 12px;
-            }
+    .hero-title { font-size: 2.2rem; }
+    .flex-grid, .flex-grid.reverse { flex-direction: column; text-align: center; }
+    .feature-list li { justify-content: center; }
+    .section-title { font-size: 2rem; }
+    
+    /* Garante que o body tenha espaço para o menu que ficou mais alto */
+    body {
+        padding-top: 110px; 
+    }
+}
 
-            /* Ajuste dos cards e textos para telas pequenas */
-            .invest-card { padding: 20px; }
-            .card-value { font-size: 1.5rem; }
+@media (max-width: 768px) {
+    #capa { 
+        margin-top: 0; 
+        padding-top: 20px; 
+        min-height: auto; 
+    }
 
-            /* Coloca as opções de decisão uma embaixo da outra */
-            .opcoes-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
+    .hero-img { 
+        max-width: 70% !important; 
+        margin-top: 10px;
+    }
+
+    /* Ajuste para telas muito pequenas (iPhone SE, etc) */
+    nav a {
+        font-size: 0.75rem;
+    }
+
+    .opcoes-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
     </style>
 </head>
 <body>
