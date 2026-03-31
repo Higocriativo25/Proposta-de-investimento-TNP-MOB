@@ -370,7 +370,7 @@
             box-shadow: 0 8px 20px rgba(0, 71, 171, 0.4);
         }
 
-        /* --- RESPONSIVIDADE --- */
+       /* --- RESPONSIVIDADE --- */
         @media (max-width: 992px) {
             .hero-title { font-size: 2.2rem; }
             .flex-grid, .flex-grid.reverse { flex-direction: column; text-align: center; }
@@ -380,17 +380,42 @@
         }
 
         @media (max-width: 768px) {
-    /* ... outras regras ... */
-    #capa { 
-        margin-top: 0; /* Remove o recuo negativo que esconde a imagem no topo */
-        padding-top: 40px; 
-        min-height: auto; /* Deixa o conteúdo definir a altura no celular */
-    }
-    .hero-img { 
-        max-width: 80% !important; /* Diminui um pouco a imagem no celular para caber melhor */
-        margin-top: 20px;
-    }
-}
+            /* Ajuste da Capa para não sumir no topo */
+            #capa { 
+                margin-top: 0; 
+                padding-top: 40px; 
+                min-height: auto; 
+            }
+
+            /* Reduz a logo/foguete da abertura */
+            .hero-img { 
+                max-width: 70% !important; 
+                margin-top: 20px;
+            }
+
+            /* AJUSTE DAS IMAGENS INTERNAS (Garante que caibam no celular) */
+            .img-block img, 
+            .distribuicao-img, 
+            #investimento img, 
+            #regras img, 
+            section img { 
+                max-width: 90% !important; 
+                height: auto !important;
+                margin: 20px auto;
+                display: block;
+                border-radius: 12px;
+            }
+
+            /* Ajuste dos cards e textos para telas pequenas */
+            .invest-card { padding: 20px; }
+            .card-value { font-size: 1.5rem; }
+
+            /* Coloca as opções de decisão uma embaixo da outra */
+            .opcoes-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
     </style>
 </head>
 <body>
