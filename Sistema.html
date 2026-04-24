@@ -929,9 +929,17 @@
     
     <div class="config-row">
     <label>Descrição</label>
-    <!-- Adicionamos o atributo 'list' e um evento 'oninput' para preenchimento automático -->
-    <input type="text" id="despesa_descricao" placeholder="Ex: Aluguel, Luz..." class="input-field" list="listaSugestoesFixos" oninput="verificarSugestaoFixo(this.value)">
-    <datalist id="listaSugestoesFixos"></datalist>
+    <div class="autocomplete-wrapper">
+        <input type="text" 
+               id="despesa_descricao" 
+               placeholder="Ex: Aluguel, Luz..." 
+               class="input-field" 
+               autocomplete="off"
+               onfocus="abrirListaDespesas()" 
+               oninput="filtrarDespesas()">
+        
+        <div id="lista_despesas_custom" class="custom-dropdown" style="display: none;"></div>
+    </div>
 </div>
 
     <div class="config-row">
@@ -1728,23 +1736,24 @@ function LancaDespesa() {
     const valor = document.getElementById('despesa_valor').value;
     const formaPagto = document.getElementById('despesa_forma_pagto').value;
     const tipo = document.getElementById('despesa_tipo').value;
+    const vencimento = document.getElementById('despesa_data_vencimento').value; // Pegando o vencimento também
 
     if (!descricao || !valor) {
         alert('Por favor, preencha a descrição e o valor da despesa.');
         return;
     }
 
-    // Criando um ID sequencial simples baseado no timestamp (ou você pode gerenciar isso no Google Apps Script)
     const id = Date.now(); 
     const dataAtual = new Date().toLocaleDateString('pt-BR');
 
     const formData = new FormData();
-    formData.append('action', 'LancaDespesa'); // Nome da ação que você deve tratar no seu Google Apps Script
+    formData.append('action', 'LancaDespesa');
     formData.append('id', id);
     formData.append('descricao', descricao);
     formData.append('valor', valor);
     formData.append('forma_pagamento', formaPagto);
     formData.append('tipo', tipo);
+    formData.append('vencimento', vencimento); // Enviando o vencimento
     formData.append('data', dataAtual);
 
     fetch(SCRIPT_URL, {
@@ -1754,14 +1763,56 @@ function LancaDespesa() {
     .then(res => res.text())
     .then(data => {
         alert('Pagamento salvo com sucesso!');
-        // Limpa os campos após salvar
+        
+        // LIMPEZA DOS CAMPOS
         document.getElementById('despesa_descricao').value = '';
         document.getElementById('despesa_valor').value = '';
+        document.getElementById('despesa_data_vencimento').value = '';
+        // Opcional: resetar os selects para o padrão
+        document.getElementById('despesa_tipo').value = 'FIXA'; 
     })
     .catch(err => {
         console.error('Erro ao salvar despesa:', err);
-        alert('Erro ao salvar despesa. Verifique a conexão ou o script.');
+        alert('Erro ao salvar despesa.');
     });
+}
+// 1. Abre a lista vertical mostrando todos os itens cadastrados
+function abrirListaDespesas() {
+    // Pega os nomes da sua lista global de fixos
+    const nomes = listaFixosGlobal.map(f => f.nome);
+    renderizarListaDespesas(nomes);
+    document.getElementById("lista_despesas_custom").style.display = "block";
+}
+
+// 2. Desenha a lista na tela (usa o mesmo CSS das categorias)
+function renderizarListaDespesas(itens) {
+    const container = document.getElementById("lista_despesas_custom");
+    container.innerHTML = "";
+
+    itens.forEach(nome => {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.innerText = nome;
+        
+        div.onclick = function() {
+            document.getElementById("despesa_descricao").value = nome;
+            container.style.display = "none";
+            
+            // Importante: Chama sua função original para preencher valor e tipo
+            verificarSugestaoFixo(nome); 
+        };
+        container.appendChild(div);
+    });
+}
+
+// 3. Filtra a lista conforme você digita
+function filtrarDespesas() {
+    const termo = document.getElementById("despesa_descricao").value.toLowerCase();
+    const filtrados = listaFixosGlobal
+        .map(f => f.nome)
+        .filter(nome => nome.toLowerCase().includes(termo));
+    
+    renderizarListaDespesas(filtrados);
 }
 
 
