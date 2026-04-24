@@ -993,11 +993,10 @@
        class="select-field"
        autocomplete="off">
 	   
-	   <input list="teste">
-<datalist id="teste">
-  <option value="Açaí">
-  <option value="Bebida">
-</datalist>
+	   <div class="autocomplete">
+    <input type="text" id="prod_categoria" placeholder="Categoria" oninput="filtrarCategoria()">
+    <div id="listaCatBox"></div>
+</div>
 
     <input type="text" id="prod_referencia" placeholder="Referência" class="input-field">
     <input type="text" id="prod_codigo_barras" placeholder="Código de barras" class="input-field">
@@ -1331,6 +1330,40 @@ background:rgba(0,0,0,0.5); z-index:999;">
             alert('Por favor, preencha o nome de usuário e a nova senha.');
         }
     }
+
+let categoriasCache = [];
+
+function carregarCategoriasCache() {
+    fetch(`${SCRIPT_URL}?action=getCategorias`)
+        .then(r => r.json())
+        .then(data => {
+            categoriasCache = [...new Set(
+                data.map(c => c.categoria).filter(Boolean)
+            )];
+        });
+}
+
+function filtrarCategoria() {
+    const input = document.getElementById("prod_categoria");
+    const box = document.getElementById("listaCatBox");
+
+    const termo = input.value.toLowerCase();
+    box.innerHTML = "";
+
+    categoriasCache
+        .filter(c => c.toLowerCase().includes(termo))
+        .forEach(c => {
+            const div = document.createElement("div");
+            div.innerText = c;
+
+            div.onclick = () => {
+                input.value = c;
+                box.innerHTML = "";
+            };
+
+            box.appendChild(div);
+        });
+}
 
 
     function handleLogout() {
