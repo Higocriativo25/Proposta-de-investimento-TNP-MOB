@@ -693,6 +693,54 @@
                 padding: 8px 10px;
             }
         }
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		.autocomplete-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
+
+.custom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+.dropdown-item:active { background-color: #eee; }
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 
         @media (max-width: 480px) {
             .login-box {
@@ -981,11 +1029,18 @@
     <input type="number" id="prod_alerta_minimo" placeholder="Alerta Mínimo" class="input-field">
     <input type="text" id="prod_imagem" placeholder="Link Imagem (URL)" class="input-field">
 
-    <input type="text" id="prod_categoria" list="listaCategorias" placeholder="Categoria" class="input-field">
-    <datalist id="listaCategorias"></datalist>
+    <div class="autocomplete-wrapper">
+    <input type="text" id="prod_categoria" placeholder="Categoria" class="input-field" 
+           onfocus="abrirLista('categoria')" oninput="filtrar('categoria')">
+    <div id="lista_categoria" class="custom-dropdown" style="display: none;"></div>
+</div>
 
-    <input type="text" id="prod_subcategoria" list="listaSubcategorias" placeholder="Subcategoria" class="input-field">
-	<datalist id="listaSubcategorias"></datalist>
+<div class="autocomplete-wrapper">
+    <input type="text" id="prod_subcategoria" placeholder="Subcategoria" class="input-field" 
+           onfocus="abrirLista('subcategoria')" oninput="filtrar('subcategoria')">
+    <div id="lista_subcategoria" class="custom-dropdown" style="display: none;"></div>
+</div>
+
     <input type="text" id="prod_referencia" placeholder="Referência" class="input-field">
     <input type="text" id="prod_codigo_barras" placeholder="Código de barras" class="input-field">
     <input type="text" id="prod_observacao" placeholder="Observação" class="input-field">
@@ -1792,6 +1847,80 @@ function renderProdutos(lista) {
         list.appendChild(aviso);
     }
 }
+
+
+
+
+let dadosOriginais = []; // Armazena o JSON completo do servidor
+
+// 1. Carrega os dados assim que a página inicia
+function inicializarListas() {
+    fetch(`${SCRIPT_URL}?action=getCategorias`)
+        .then(res => res.json())
+        .then(data => {
+            dadosOriginais = data;
+        });
+}
+
+// 2. Função genérica para abrir e renderizar a lista
+function abrirLista(tipo) {
+    const inputId = tipo === 'categoria' ? 'prod_categoria' : 'prod_subcategoria';
+    const termo = document.getElementById(inputId).value.toLowerCase();
+    
+    // Filtra os dados únicos baseado no tipo
+    const listaUnica = [...new Set(
+        dadosOriginais.map(item => item[tipo]).filter(Boolean)
+    )];
+
+    renderizarDropdown(tipo, listaUnica);
+    document.getElementById(`lista_${tipo}`).style.display = "block";
+}
+
+// 3. Renderiza os itens na tela
+function renderizarDropdown(tipo, itens) {
+    const container = document.getElementById(`lista_${tipo}`);
+    container.innerHTML = "";
+
+    itens.sort().forEach(valor => {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.innerText = valor;
+        
+        div.onclick = function() {
+            document.getElementById(`prod_${tipo}`).value = valor;
+            container.style.display = "none";
+        };
+        container.appendChild(div);
+    });
+}
+
+// 4. Filtra enquanto digita
+function filtrar(tipo) {
+    const inputId = tipo === 'categoria' ? 'prod_categoria' : 'prod_subcategoria';
+    const termo = document.getElementById(inputId).value.toLowerCase();
+    
+    const filtrados = [...new Set(
+        dadosOriginais
+            .map(item => item[tipo])
+            .filter(v => v && v.toLowerCase().includes(termo))
+    )];
+
+    renderizarDropdown(tipo, filtrados);
+}
+
+// 5. Fecha qualquer lista ao clicar fora
+document.addEventListener("click", function(e) {
+    if (!e.target.closest(".autocomplete-wrapper")) {
+        document.getElementById("lista_categoria").style.display = "none";
+        document.getElementById("lista_subcategoria").style.display = "none";
+    }
+});
+
+// Inicia a busca dos dados
+inicializarListas();
+
+
+
 
 function pesquisarProduto() {
     const input = document.getElementById('pesquisa_produto');
