@@ -1154,20 +1154,18 @@
     <h2>CONTROLE DE VALIDADE</h2>
     
     <div class="validade-form">
-        <input type="hidden" id="val_id"> <!-- Campo oculto para edição -->
+        <input type="hidden" id="val_id"> <div class="config-row" style="position: relative;">
+            <label>Produto:</label>
+            <input type="text" id="val_produto" placeholder="Digite o nome do produto..." 
+                   class="input-field" autocomplete="off"
+                   onfocus="abrirListaProdutosValidade()" 
+                   oninput="buscarProdutosValidade()">
+            
+            <div id="lista_val_produtos" class="custom-dropdown" 
+                 style="display: none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; background: white; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 5px; max-height: 180px; overflow-y: auto;">
+            </div>
+        </div>
         
-       <div class="config-row" style="position: relative;">
-    <label>Produto:</label>
-    <input type="text" id="val_produto" placeholder="Digite o nome do produto..." 
-           class="input-field" autocomplete="off"
-           onfocus="abrirListaProdutosValidade()" 
-           oninput="buscarProdutosValidade()">
-    
-    <div id="lista_val_produtos" class="custom-dropdown" 
-         style="display: none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; background: white; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 5px; max-height: 180px; overflow-y: auto;">
-    </div>
-</div>
-		
         <div class="config-row">
             <label>Quantidade:</label>
             <input type="number" id="val_quantidade" placeholder="Ex: 50" class="input-field">
@@ -1194,11 +1192,11 @@
             <button onclick="pesquisarValidades()" class="btn-admin">PESQUISAR</button>
         </div>
     </div>
-<div id="resultadoBuscaValidades" style="margin-top: 20px; overflow-x: auto;">
-    </div>
+    
+    <div id="resultadoBuscaValidades" style="margin-top: 20px; overflow-x: auto;"></div>
+    
     <div id="listaValidadesResultado" class="vendas-table" style="margin-top: 30px;">
-        <!-- A tabela de resultados aparecerá aqui -->
-    </div>
+        </div>
 </div>
 <!-- MODAL DE EDIÇÃO DE VALIDADES -->
 <div id="modalEdicaoValidade" class="screen"
