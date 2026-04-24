@@ -2424,29 +2424,47 @@ function buscarProdutosValidade() {
 
 
 function abrirListaProdutosValidade() {
+    // Tenta usar a lista global de produtos
     if (typeof produtos !== 'undefined' && produtos.length > 0) {
         renderizarListaProdValidade(produtos);
-        document.getElementById("lista_val_produtos").style.display = "block";
     }
 }
 
 function renderizarListaProdValidade(itens) {
     const container = document.getElementById("lista_val_produtos");
+    if (!container) return;
+    
     container.innerHTML = "";
+    
+    if (itens.length > 0) {
+        container.style.display = "block";
+    }
 
     itens.forEach(p => {
         const div = document.createElement("div");
         div.className = "dropdown-item";
-        div.style = "padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px;";
+        // Estilo otimizado para o toque do dedo (mais espaçado)
+        div.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; background: white; color: #333;";
         div.innerText = p.nome;
         
-        div.onclick = function() {
+        // CRITICAL PARA CELULAR: usar onmousedown para capturar o clique antes do teclado fechar
+        div.onmousedown = function(e) {
+            e.preventDefault(); // Evita que o campo perca o foco e a lista suma antes de selecionar
             document.getElementById("val_produto").value = p.nome;
             container.style.display = "none";
         };
+        
         container.appendChild(div);
     });
 }
+
+// Fecha a lista se clicar em qualquer outro lugar da tela
+document.addEventListener("click", function(e) {
+    const lista = document.getElementById("lista_val_produtos");
+    if (lista && e.target.id !== "val_produto") {
+        lista.style.display = "none";
+    }
+});
 
 // Fecha ao clicar fora
 document.addEventListener("click", function(e) {
