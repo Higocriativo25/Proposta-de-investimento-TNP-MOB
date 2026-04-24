@@ -1702,48 +1702,29 @@ function addCategoria() {
         }
     }
 	
-	// Função para carregar os nomes das despesas fixas na lista de sugestões
+// 1. Carrega os dados do servidor e guarda na variável global
 function carregarSugestoesFixos() {
     fetch(`${SCRIPT_URL}?action=getFixos`)
         .then(res => res.json())
         .then(data => {
-            listaFixosGlobal = data; // Armazena globalmente para consulta rápida
-            const datalist = document.getElementById('listaSugestoesFixos');
-            datalist.innerHTML = '';
-            
-            data.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.nome;
-                datalist.appendChild(option);
-            });
+            listaFixosGlobal = data; // Armazena globalmente
+            // Removido o preenchimento do datalist antigo para evitar o bug do teclado
         })
         .catch(err => console.error('Erro ao carregar sugestões:', err));
 }
 
-// Função que preenche o valor automaticamente se o nome coincidir com um fixo
+// 2. Preenche automaticamente os campos de despesa (valor, tipo, data)
 function verificarSugestaoFixo(valorDigitado) {
-    // Procura na lista global se o nome digitado coincide com algum fixo cadastrado
     const fixoEncontrado = listaFixosGlobal.find(f => f.nome.toLowerCase() === valorDigitado.toLowerCase());
     
     if (fixoEncontrado) {
-        // Preenche automaticamente os campos com os dados do fixo
         document.getElementById('despesa_valor').value = fixoEncontrado.valor;
         document.getElementById('despesa_tipo').value = 'FIXA';
-        document.getElementById('despesa_data_vencimento').value = fixoEncontrado.data; // Preenche a data cadastrada
+        document.getElementById('despesa_data_vencimento').value = fixoEncontrado.data;
     }
 }
 
-
-// Chame esta função ao carregar a página ou ao abrir a aba de configurações
-// Exemplo: adicione dentro da sua função loadConfigs() ou no final do script
-carregarSugestoesFixos();
-
-	
-	
-	// ===== FUNÇÃO PARA SALVAR DESPESA NA ABA PAGAMENTO =====
-
-
-
+// 3. Controle da lista vertical DENTRO do Modal
 function abrirListaFixoModal() {
     const nomes = listaFixosGlobal.map(f => f.nome);
     renderizarListaFixoModal(nomes);
@@ -1763,12 +1744,11 @@ function renderizarListaFixoModal(itens) {
             document.getElementById("fixo_nome").value = nome;
             container.style.display = "none";
             
-            // Busca os dados desse fixo para preencher o resto do modal
+            // Preenche os campos do modal com os dados do fixo selecionado
             const fixo = listaFixosGlobal.find(f => f.nome === nome);
             if (fixo) {
                 document.getElementById('fixo_valor').value = fixo.valor;
                 document.getElementById('fixo_data').value = fixo.data;
-                // Se o seu sistema usa linha de edição, você pode setar aqui também
             }
         };
         container.appendChild(div);
@@ -1783,6 +1763,9 @@ function filtrarFixoModal() {
     
     renderizarListaFixoModal(filtrados);
 }
+
+// Inicia a carga dos dados ao abrir o sistema
+carregarSugestoesFixos();
 
 
 
