@@ -2423,33 +2423,64 @@ function buscarProdutosValidade() {
 }
 
 
-function abrirListaProdutosValidade() {
-    // Tenta usar a lista global de produtos
-    if (typeof produtos !== 'undefined' && produtos.length > 0) {
-        renderizarListaProdValidade(produtos);
+function buscarProdutosValidade() {
+    const termo = document.getElementById('val_produto').value.toLowerCase();
+    const container = document.getElementById("lista_val_produtos");
+    
+    if (!termo) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
     }
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        // Se já tem no cache, usa o cache
+        if (produtosCache[termo]) {
+            renderizarListaProdValidade(produtosCache[termo]);
+            return;
+        }
+
+        // Busca no servidor (Google Sheets)
+        const params = new URLSearchParams({
+            action: 'buscarProdutosValidade',
+            termo: termo,
+            limite: 10
+        });
+
+        fetch(`${SCRIPT_URL}?${params}`)
+            .then(res => res.json())
+            .then(dados => {
+                produtosCache[termo] = dados;
+                renderizarListaProdValidade(dados);
+            })
+            .catch(err => console.error('Erro:', err));
+    }, 500);
 }
 
+// ESTA É A FUNÇÃO QUE CRIA A LISTA VISÍVEL
 function renderizarListaProdValidade(itens) {
     const container = document.getElementById("lista_val_produtos");
     if (!container) return;
     
     container.innerHTML = "";
     
-    if (itens.length > 0) {
-        container.style.display = "block";
+    if (itens.length === 0) {
+        container.style.display = "none";
+        return;
     }
+
+    container.style.display = "block";
 
     itens.forEach(p => {
         const div = document.createElement("div");
         div.className = "dropdown-item";
-        // Estilo otimizado para o toque do dedo (mais espaçado)
-        div.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; background: white; color: #333;";
+        div.style = "padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; background: white; color: black; font-weight: bold;";
         div.innerText = p.nome;
         
-        // CRITICAL PARA CELULAR: usar onmousedown para capturar o clique antes do teclado fechar
+        // CORREÇÃO PARA CELULAR: onmousedown
         div.onmousedown = function(e) {
-            e.preventDefault(); // Evita que o campo perca o foco e a lista suma antes de selecionar
+            e.preventDefault(); 
             document.getElementById("val_produto").value = p.nome;
             container.style.display = "none";
         };
@@ -2458,20 +2489,12 @@ function renderizarListaProdValidade(itens) {
     });
 }
 
-// Fecha a lista se clicar em qualquer outro lugar da tela
-document.addEventListener("click", function(e) {
-    const lista = document.getElementById("lista_val_produtos");
-    if (lista && e.target.id !== "val_produto") {
-        lista.style.display = "none";
-    }
-});
-
 // Fecha ao clicar fora
-document.addEventListener("click", function(e) {
-    if (e.target.id !== "val_produto") {
-        document.getElementById("lista_val_produtos").style.display = "none";
-    }
-});
+//document.addEventListener("click", function(e) {
+ //   if (e.target.id !== "val_produto") {
+//        document.getElementById("lista_val_produtos").style.display = "none";
+//    }
+//});
 
 
 
