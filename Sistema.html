@@ -981,23 +981,11 @@
     <input type="number" id="prod_alerta_minimo" placeholder="Alerta Mínimo" class="input-field">
     <input type="text" id="prod_imagem" placeholder="Link Imagem (URL)" class="input-field">
 
-<input type="text" id="prod_categoria"
-       list="listaCategorias"
-       placeholder="Digite a categoria..."
-       class="select-field"
-       autocomplete="off">
+    <input type="text" id="prod_categoria" list="listaCategorias" placeholder="Categoria" class="input-field">
+    <datalist id="listaCategorias"></datalist>
 
-<input type="text" id="prod_subcategoria"
-       list="listaSubcategorias"
-       placeholder="Digite a subcategoria..."
-       class="select-field"
-       autocomplete="off">
-	   
-	   <div class="autocomplete">
-    <input type="text" id="prod_categoria" placeholder="Categoria" oninput="filtrarCategoria()">
-    <div id="listaCatBox"></div>
-</div>
-
+    <input type="text" id="prod_subcategoria" list="listaSubcategorias" placeholder="Subcategoria" class="input-field">
+	<datalist id="listaSubcategorias"></datalist>
     <input type="text" id="prod_referencia" placeholder="Referência" class="input-field">
     <input type="text" id="prod_codigo_barras" placeholder="Código de barras" class="input-field">
     <input type="text" id="prod_observacao" placeholder="Observação" class="input-field">
@@ -1331,40 +1319,6 @@ background:rgba(0,0,0,0.5); z-index:999;">
         }
     }
 
-let categoriasCache = [];
-
-function carregarCategoriasCache() {
-    fetch(`${SCRIPT_URL}?action=getCategorias`)
-        .then(r => r.json())
-        .then(data => {
-            categoriasCache = [...new Set(
-                data.map(c => c.categoria).filter(Boolean)
-            )];
-        });
-}
-
-function filtrarCategoria() {
-    const input = document.getElementById("prod_categoria");
-    const box = document.getElementById("listaCatBox");
-
-    const termo = input.value.toLowerCase();
-    box.innerHTML = "";
-
-    categoriasCache
-        .filter(c => c.toLowerCase().includes(termo))
-        .forEach(c => {
-            const div = document.createElement("div");
-            div.innerText = c;
-
-            div.onclick = () => {
-                input.value = c;
-                box.innerHTML = "";
-            };
-
-            box.appendChild(div);
-        });
-}
-
 
     function handleLogout() {
         isLoggedIn = false;
@@ -1675,27 +1629,6 @@ function addCategoria() {
         }
     }
 	
-	function mostrarSugestoes(input, lista) {
-    const box = document.getElementById("sugestoes");
-    const termo = input.value.toLowerCase();
-
-    box.innerHTML = "";
-
-    lista
-        .filter(item => item.toLowerCase().includes(termo))
-        .forEach(item => {
-            const div = document.createElement("div");
-            div.textContent = item;
-            div.onclick = () => {
-                input.value = item;
-                box.innerHTML = "";
-            };
-            box.appendChild(div);
-        });
-}
-	
-	
-	
 	// Função para carregar os nomes das despesas fixas na lista de sugestões
 function carregarSugestoesFixos() {
     fetch(`${SCRIPT_URL}?action=getFixos`)
@@ -1713,8 +1646,6 @@ function carregarSugestoesFixos() {
         })
         .catch(err => console.error('Erro ao carregar sugestões:', err));
 }
-
-
 
 // Função que preenche o valor automaticamente se o nome coincidir com um fixo
 function verificarSugestaoFixo(valorDigitado) {
@@ -1734,7 +1665,8 @@ function verificarSugestaoFixo(valorDigitado) {
 // Exemplo: adicione dentro da sua função loadConfigs() ou no final do script
 carregarSugestoesFixos();
 
-
+	
+	
 	// ===== FUNÇÃO PARA SALVAR DESPESA NA ABA PAGAMENTO =====
 function LancaDespesa() {
     const descricao = document.getElementById('despesa_descricao').value;
@@ -3018,6 +2950,9 @@ function resetarFormulario() {
  //Sem problemas, vamos recomeçar com atenção total. Vou aplicar as melhorias
  //de usabilidade para celular (bloqueio de sugestões) e manter exatamente os
  //comentários e a estrutura que você pediu.
+
+  
+</script>
 
   
 </script>
