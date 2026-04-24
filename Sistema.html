@@ -975,10 +975,11 @@
 
 
 <!-- MODAL DE DESPESAS FIXAS -->
-<div id="modalFixos" class="screen" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:90%; max-width:500px; box-shadow: 0 0 20px rgba(0,0,0,0.5); border: 2px solid var(--primary-green);">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>GERENCIAR FIXOS</h2>
-        <button onclick="fecharModalFixos()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:red;">&times;</button>
+<div id="modalFixos" class="screen" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:90%; max-width:500px; box-shadow: 0 0 20px rgba(0,0,0,0.5); border: 2px solid var(--primary-green); background: white; padding: 20px; border-radius: 10px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+        <h2 style="margin: 0;">GERENCIAR FIXOS</h2>
+        <button onclick="fecharModalFixos()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:red; font-weight:bold;">&times;</button>
     </div>
 
     <div class="config-row">
@@ -988,44 +989,53 @@
         </select>
     </div>
 
-    <hr style="margin: 15px 0;">
+    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
 
-    <input type="hidden" id="fixo_linha_edicao"> <!-- Campo oculto para saber qual linha editar -->
+    <input type="hidden" id="fixo_linha_edicao"> 
     
     <div class="config-row">
         <label>Nome:</label>
-        <input type="text" id="fixo_nome" class="input-field" placeholder="Ex: Aluguel">
+        <div class="autocomplete-wrapper">
+            <input type="text" id="fixo_nome" class="input-field" 
+                   placeholder="Ex: Aluguel" 
+                   autocomplete="off"
+                   onfocus="abrirListaFixoModal()" 
+                   oninput="filtrarFixoModal()">
+            <div id="lista_fixo_modal" class="custom-dropdown" style="display: none;"></div>
+        </div>
     </div>
+
     <div class="config-row">
         <label>Valor (R$):</label>
         <input type="number" id="fixo_valor" class="input-field" placeholder="0.00">
     </div>
+
     <div class="config-row">
         <label>Data:</label>
         <input type="text" id="fixo_data" class="input-field" placeholder="Ex: Todo dia 10">
     </div>
 
-    <button id="btn_salvar_fixo" onclick="salvarFixo()" class="btn-save" style="width:100%;">SALVAR OU EDITAR VALOR FIXO</button>
+    <button id="btn_salvar_fixo" onclick="salvarFixo()" class="btn-save" style="width:100%; margin-top: 10px;">SALVAR OU EDITAR VALOR FIXO</button>
 </div>
 
-<!-- Fundo escuro para o modal -->
 <div id="modalOverlay" onclick="fecharModalFixos()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;"></div>
-
-</div>
 
 
                 <div class="config-section">
-                    <h2>CATEGORIAS E SUBCATEGORIAS</h2>
-                    
-                    <div class="categoria-form">
-                        <input type="text" id="nova_categoria" placeholder="Nova Categoria" class="input-field">
-                        <input type="text" id="nova_subcategoria" placeholder="Nova Subcategoria" class="input-field">
-                        <button onclick="addCategoria()" class="btn-save">SALVAR</button>
-                    </div>
+    <h2>CATEGORIAS E SUBCATEGORIAS</h2>
+    
+    <div class="categoria-form">
+        <div class="autocomplete-wrapper">
+            <input type="text" id="nova_categoria" placeholder="Nova Categoria" class="input-field">
+        </div>
+        <div class="autocomplete-wrapper">
+            <input type="text" id="nova_subcategoria" placeholder="Nova Subcategoria" class="input-field">
+        </div>
+        <button onclick="addCategoria()" class="btn-save" style="width: 100%; margin-top: 5px;">SALVAR</button>
+    </div>
 
-                    <div id="categoriasList" class="categorias-list"></div>
-                </div>
-            </div>
+    <div id="categoriasList" class="categorias-list"></div>
+</div>
 
             <!-- TELA 4: PRODUTOS -->
             <div id="produtosScreen" class="screen produtos-screen">
@@ -1731,6 +1741,51 @@ carregarSugestoesFixos();
 	
 	
 	// ===== FUNÇÃO PARA SALVAR DESPESA NA ABA PAGAMENTO =====
+
+
+
+function abrirListaFixoModal() {
+    const nomes = listaFixosGlobal.map(f => f.nome);
+    renderizarListaFixoModal(nomes);
+    document.getElementById("lista_fixo_modal").style.display = "block";
+}
+
+function renderizarListaFixoModal(itens) {
+    const container = document.getElementById("lista_fixo_modal");
+    container.innerHTML = "";
+
+    itens.forEach(nome => {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.innerText = nome;
+        
+        div.onclick = function() {
+            document.getElementById("fixo_nome").value = nome;
+            container.style.display = "none";
+            
+            // Busca os dados desse fixo para preencher o resto do modal
+            const fixo = listaFixosGlobal.find(f => f.nome === nome);
+            if (fixo) {
+                document.getElementById('fixo_valor').value = fixo.valor;
+                document.getElementById('fixo_data').value = fixo.data;
+                // Se o seu sistema usa linha de edição, você pode setar aqui também
+            }
+        };
+        container.appendChild(div);
+    });
+}
+
+function filtrarFixoModal() {
+    const termo = document.getElementById("fixo_nome").value.toLowerCase();
+    const filtrados = listaFixosGlobal
+        .map(f => f.nome)
+        .filter(nome => nome.toLowerCase().includes(termo));
+    
+    renderizarListaFixoModal(filtrados);
+}
+
+
+
 function LancaDespesa() {
     const descricao = document.getElementById('despesa_descricao').value;
     const valor = document.getElementById('despesa_valor').value;
