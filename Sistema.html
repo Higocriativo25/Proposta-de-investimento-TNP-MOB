@@ -1885,18 +1885,13 @@
 <div id="validadeScreen" class="screen">
     <h2>CONTROLE DE VALIDADE</h2>
     
-    <div class="validade-form">
-        <input type="hidden" id="val_id"> <!-- Campo oculto para edição -->
-        
-        <div class="config-row" style="position: relative;">
+    <div class="config-row" style="position: relative;">
     <label>Produto:</label>
     <input type="text" id="val_produto" placeholder="Digite o nome do produto..." 
            class="input-field" autocomplete="off"
            onfocus="abrirListaProdutosValidade()" 
-           oninput="buscarProdutosValidade()">
-    
-    <div id="lista_val_produtos" class="custom-dropdown" 
-         style="display: none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; background: white; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 5px; max-height: 180px; overflow-y: auto;">
+           oninput="filtrarProdutosValidadeLocal()"> <div id="lista_val_produtos" class="custom-dropdown" 
+         style="display: none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 5px; max-height: 180px; overflow-y: auto;">
     </div>
 </div>
 		
@@ -3140,22 +3135,41 @@ function calcularDataAlertaValidade() {
 }
 
 // Auto-preenchimento de produtos (usando o cache que você já tem)
-function buscarProdutosValidade() {
-    const termo = document.getElementById('val_produto').value.toLowerCase();
-    const lista = document.getElementById('listaProdutosValidade');
-    lista.innerHTML = '';
+function filtrarProdutosValidadeLocal() {
+    const inputOriginal = document.getElementById("val_produto").value;
+    const listaDiv = document.getElementById("lista_val_produtos");
 
-    if (!termo || !produtos) return;
+    // 1. Função interna para limpar o texto (tira acento, espaço e deixa minúsculo)
+    const normalizar = (texto) => {
+        return texto
+            .toLowerCase()                                  // Minúscula
+            .trim()                                         // Tira espaços nas pontas
+            .normalize("NFD")                               // Decompõe acentos
+            .replace(/[\u0300-\u036f]/g, "")                // Remove os acentos
+            .replace(/\s+/g, '');                           // Remove espaços internos
+    };
 
-    produtos.forEach(p => {
-        if (p.nome.toLowerCase().includes(termo)) {
-            const option = document.createElement('option');
-            option.value = p.nome;
-            lista.appendChild(option);
+    const termoLimpo = normalizar(inputOriginal);
+
+    if (!termoLimpo) {
+        listaDiv.style.display = "none";
+        return;
+    }
+
+    if (typeof produtos !== 'undefined' && produtos.length > 0) {
+        const filtrados = produtos.filter(p => {
+            const nomeProdutoLimpo = normalizar(p.nome);
+            return nomeProdutoLimpo.includes(termoLimpo);
+        });
+
+        if (filtrados.length > 0) {
+            renderizarListaProdValidade(filtrados);
+            listaDiv.style.display = "block";
+        } else {
+            listaDiv.style.display = "none";
         }
-    });
+    }
 }
-
 
 
 
