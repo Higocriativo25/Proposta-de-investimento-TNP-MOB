@@ -1946,11 +1946,17 @@ border: 2px solid var(--primary-green);">
 
     <!-- PESQUISA -->
     <div class="config-row">
-        <input type="text" id="pesquisaEdicao"
-        placeholder="Digite o nome do produto..."
-        class="input-field"
-        onkeyup="pesquisarParaEditar()">
-    </div>
+    <input type="text" id="pesquisaEdicao"
+           placeholder="Digite o nome do produto..."
+           class="input-field"
+           autocomplete="off"
+           oninput="pesquisarParaEditar()"> </div>
+
+<div id="listaResultadosPesquisa"
+     style="max-height:150px; overflow-y:auto; border:1px solid #ddd; margin-bottom:15px; display:none; background: white;">
+</div>
+
+<hr style="margin: 15px 0;">
 
     <div id="listaResultadosPesquisa"
     style="max-height:150px; overflow-y:auto; border:1px solid #ddd; margin-bottom:15px; display:none;"></div>
@@ -3304,69 +3310,109 @@ function salvarValidade() {
     });
 }
 
+// Variável global para guardar os dados da planilha na memória
+let cacheParaEdicao = [];
 
+function editarValidade() {
+    document.getElementById("modalEdicaoValidade").style.display = "block";
+    document.getElementById("modalOverlayEdicao").style.display = "block";
 
+    // Limpa busca anterior
+    document.getElementById("pesquisaEdicao").value = "";
+    const lista = document.getElementById("listaResultadosPesquisa");
+    lista.innerHTML = "<div style='padding:10px;'>Carregando dados da planilha...</div>";
+    lista.style.display = "block";
+    document.getElementById("formEdicao").style.display = "none";
 
-
-
-
-function pesquisarParaEditar() {
-    const termo = document.getElementById("pesquisaEdicao").value;
-
-    if (!termo) return;
-
-    const params = new URLSearchParams({
-        action: 'buscarValidades',
-        nome: termo
-    });
-
+    // BUSCA OS DADOS UMA ÚNICA VEZ AO ABRIR O MODAL
+    const params = new URLSearchParams({ action: 'getValidades' });
     fetch(`${SCRIPT_URL}?${params.toString()}`)
     .then(res => res.json())
-    .then(res => {
-
-        let lista = document.getElementById("listaResultadosPesquisa");
-        lista.innerHTML = "";
-        lista.style.display = "block";
-
-        if (!res || res.length === 0) {
-            lista.innerHTML = "<div style='padding:8px;'>Nenhum resultado</div>";
-            return;
-        }
-
-        res.forEach(item => {
-            let div = document.createElement("div");
-            div.innerHTML = item.produto + " (" + item.quantidade + ")";
-            div.style.padding = "8px";
-            div.style.cursor = "pointer";
-
-            div.onclick = () => selecionarItemEdicao(item);
-
-            lista.appendChild(div);
-        });
-
+    .then(dados => {
+        cacheParaEdicao = dados; // Salva tudo na memória
+        lista.innerHTML = "<div style='padding:10px; color: green;'>Pronto! Digite para buscar.</div>";
     })
     .catch(err => {
         console.error(err);
-        alert("Erro ao buscar");
+        lista.innerHTML = "<div style='padding:10px; color: red;'>Erro ao carregar dados.</div>";
     });
 }
 
+function pesquisarParaEditar() {
+    const inputOriginal = document.getElementById("pesquisaEdicao").value;
+    const lista = document.getElementById("listaResultadosPesquisa");
+
+    // Função interna para ignorar acentos, espaços e maiúsculas
+    const normalizar = (texto) => {
+        return texto.toLowerCase().trim().normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, '');
+    };
+
+    const termoLimpo = normalizar(inputOriginal);
+
+    if (!termoLimpo) {
+        lista.innerHTML = "";
+        return;
+    }
+
+    // Filtra no cache (memória local) - INSTANTÂNEO
+    const filtrados = cacheParaEdicao.filter(item => {
+        const nomeLimpo = normalizar(item.produto || "");
+        return nomeLimpo.includes(termoLimpo);
+    });
+
+    lista.innerHTML = "";
+    lista.style.display = "block";
+
+    if (filtrados.length === 0) {
+        lista.innerHTML = "<div style='padding:8px;'>Nenhum produto encontrado.</div>";
+        return;
+    }
+
+    filtrados.slice(0, 15).forEach(item => {
+        let div = document.createElement("div");
+        div.innerHTML = `<strong>${item.produto}</strong> <small>(${item.quantidade})</small>`;
+        div.style = "padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;";
+        
+        div.onclick = () => selecionarItemEdicao(item);
+        
+        div.onmouseover = () => div.style.backgroundColor = "#f0f0f0";
+        div.onmouseout = () => div.style.backgroundColor = "white";
+        lista.appendChild(div);
+    });
+}
 
 function selecionarItemEdicao(item) {
-
     document.getElementById("formEdicao").style.display = "block";
+    document.getElementById("listaResultadosPesquisa").style.display = "none";
 
-    document.getElementById("edit_id").value = item.linha;
+    // Preenche os campos
+    document.getElementById("edit_id").value = item.id; // getValidades retorna .id
     document.getElementById("edit_produto").value = item.produto;
     document.getElementById("edit_quantidade").value = item.quantidade;
 
-    // ⚠️ CORREÇÃO DATA
-    let partes = item.validade.split('/');
-    let formatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    // Ajuste da data para o calendário (AAAA-MM-DD)
+    if (item.validade) {
+        // Se a data vier como ISO (2026-04-24T...) pegamos só a data
+        const apenasData = item.validade.split('T');
+        document.getElementById("edit_validade").value = apenasData;
+    }
 
-    document.getElementById("edit_validade").value = formatada;
-    document.getElementById("edit_alerta").value = item.alerta;
+    document.getElementById("edit_alerta").value = item.alerta || 0;
+    
+    // Atualiza a prévia da data de alerta no modal
+    calcularDataAlertaModal();
 }
+
+
+
+
+
+
+
+
+
 
 
 function salvarEdicaoValidade() {
@@ -3406,16 +3452,7 @@ function salvarEdicaoValidade() {
 
 
 
-function editarValidade() {
-    document.getElementById("modalEdicaoValidade").style.display = "block";
-    document.getElementById("modalOverlayEdicao").style.display = "block";
 
-    // limpa busca anterior
-    document.getElementById("pesquisaEdicao").value = "";
-    document.getElementById("listaResultadosPesquisa").innerHTML = "";
-    document.getElementById("listaResultadosPesquisa").style.display = "none";
-    document.getElementById("formEdicao").style.display = "none";
-}
 
 function fecharModalEdicao() {
     document.getElementById("modalEdicaoValidade").style.display = "none";
