@@ -1818,7 +1818,7 @@
 			
 			
 <!-- TELA 5: DEVOLUÇÃO -->
-            <div id="devolucaoScreen" class="screen devolucao-screen">
+   <div id="devolucaoScreen" class="screen devolucao-screen">
     <h2>REGISTRO DE DEVOLUÇÃO</h2>
 
     <input type="text" id="dev_cliente" placeholder="Nome ou Telefone" class="input-field" list="listaClientes" oninput="buscarClientes()">
@@ -1826,10 +1826,27 @@
 
     <input type="text" id="dev_telefone" placeholder="Telefone" class="input-field">
     <input type="text" id="dev_endereco" placeholder="Endereço" class="input-field">
-	<h3>Produto</h3>
-    <input type="text" id="dev_produto" placeholder="Nome do Produto" class="input-field" list="listaProdutos">
-    <datalist id="listaProdutos"></datalist>
-	
+
+    <div style="position: relative; margin: 15px 0;">
+        <h3 style="margin-bottom: 5px;">Produto</h3>
+        <input type="text" id="dev_produto" placeholder="Nome do Produto" 
+               class="input-field" autocomplete="off"
+               oninput="filtrarProdutosDevolucao()">
+        
+        <div id="lista_dev_produtos" 
+             style="display: none; 
+                    position: absolute; 
+                    top: 100%; 
+                    left: 0; 
+                    width: 100%; 
+                    z-index: 9999; 
+                    background: white; 
+                    border: 1px solid #ddd; 
+                    box-shadow: 0px 4px 10px rgba(0,0,0,0.2); 
+                    max-height: 200px; 
+                    overflow-y: auto;">
+        </div>
+    </div>
     <input type="hidden" id="dev_idcliente">    
     
     <input type="number" id="dev_quantidade" placeholder="Quantidade" class="input-field">
@@ -3028,6 +3045,67 @@ async function carregarFormasPagamento() {
         })
         .catch(err => console.error('Erro ao salvar devolução:', err));
 }
+
+
+
+
+
+function filtrarProdutosDevolucao() {
+    const input = document.getElementById("dev_produto");
+    const listaDiv = document.getElementById("lista_dev_produtos");
+    const termo = normalizarTexto(input.value);
+
+    if (!termo) {
+        listaDiv.style.display = "none";
+        return;
+    }
+
+    // Filtra na variável global 'produtos'
+    const filtrados = produtos.filter(p => {
+        const nome = normalizarTexto(p.nome || "");
+        const ref = normalizarTexto(p.referencia || "");
+        return nome.includes(termo) || ref.includes(termo);
+    });
+
+    listaDiv.innerHTML = "";
+    listaDiv.style.display = "block";
+
+    if (filtrados.length === 0) {
+        listaDiv.innerHTML = "<div style='padding:10px; color:#888;'>Nenhum produto...</div>";
+        return;
+    }
+
+    // Renderiza as opções
+    filtrados.slice(0, 15).forEach(p => {
+        const div = document.createElement("div");
+        div.style = "padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;";
+        div.innerHTML = `<strong>${p.nome}</strong> <br><small>Preço: R$ ${p.preco} | Ref: ${p.referencia || '-'}</small>`;
+        
+        div.onclick = function() {
+            // Preenche o nome
+            input.value = p.nome;
+            // Preenche o valor unitário automaticamente para facilitar a devolução!
+            document.getElementById("dev_valor_unitario").value = p.preco;
+            
+            listaDiv.style.display = "none";
+            
+            // Chama o cálculo de total caso você já tenha essa função
+            if(typeof calcularTotalDevolucao === 'function') calcularTotalDevolucao();
+        };
+        listaDiv.appendChild(div);
+    });
+}
+
+// Fecha a lista se clicar fora
+document.addEventListener("click", function(e) {
+    if (e.target.id !== "dev_produto") {
+        document.getElementById("lista_dev_produtos").style.display = "none";
+    }
+});
+
+
+
+
 
 
 
