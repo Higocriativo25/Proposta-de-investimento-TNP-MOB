@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f0f2f5; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+    h2 { color: #1a73e8; text-align: center; }
+    .url-box { font-size: 10px; color: #777; background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 20px; word-break: break-all; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    .btn-add { background: #6c757d; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+    .btn-gerar { background: #28a745; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold; }
+    .split-row { display: flex; gap: 5px; margin-top: 10px; }
+    #resultado { margin-top: 20px; text-align: center; }
+    #qrcode { margin: 15px auto; width: 180px; height: 180px; display: flex; justify-content: center; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>TNP PIX</h2>
+  
+  <div class="url-box">
+    <strong>URL do Script:</strong><br>
+    <?= scriptUrl ?>
+  </div>
+    
+  <label>Valor (R$)</label>
+  <input type="number" id="valor" placeholder="0.00" step="0.01">
+  
+  <div id="splits">
+    <label>Splits</label>
+  </div>
+    
+  <button class="btn-add" onclick="addSplit()">+ Adicionar Split</button>
+  <button class="btn-gerar" id="btn" onclick="gerar()">Gerar PIX</button>
+  
+  <div id="resultado"></div>
+</div>
+
+<script>
+  function addSplit() {
+    const div = document.createElement('div');
+    div.className = 'split-row';
+    div.innerHTML = `
+      <input type="number" class="sid" placeholder="ID">
+      <input type="number" class="sper" placeholder="%">
+      <button onclick="this.parentElement.remove()">X</button>
+    `;
+    document.getElementById('splits').appendChild(div);
+  }
+
+  function gerar() {
+    const valorInput = document.getElementById('valor').value;
+    const btn = document.getElementById('btn');
+    const res = document.getElementById('resultado');
+        
+    if(!valorInput) return alert("Digite o valor");
+    
+    const splitsArr = [];
+    const ids = document.getElementsByClassName('sid');
+    const pers = document.getElementsByClassName('sper');
+    let somaPorcentagens = 0;
+    
+    // Varre e formata os splits adicionados dinamicamente
+    for(let i = 0; i < ids.length; i++) {
+      if(ids[i].value && pers[i].value) {
+        const porcentagem = parseFloat(pers[i].value);
+        somaPorcentagens += porcentagem;
+        
+        splitsArr.push({ 
+          "user_id": parseInt(ids[i].value), 
+          "percentage": porcentagem 
+        });
+      }
+    }
+    
+    // Validação da Regra de Negócio: Split Total <= 99%
+    if (somaPorcentagens > 99) {
+      return alert("Erro: O split total máximo permitido é de 99% (1% é retido pela plataforma). Seu total atual: " + somaPorcentagens + "%");
+    }
+    
+    // Validação da Regra de Negócio: Máximo de 10 participantes
+    if (splitsArr.length > 10) {
+      return alert("Erro: O número máximo de participantes permitidos no split é 10.");
+    }
+
+    res.innerHTML = "Gerando PIX...";
+    btn.disabled = true;
+
+    // Constrói o objeto de envio limpando nós vazios
+    const dadosEnvio = { 
+      value: parseFloat(valorInput) 
+    };
+    
+    if (splitsArr.length > 0) {
+      dadosEnvio.split = splitsArr;
+    }
+
+    // Execução controlada no Google Apps Script
+    google.script.run
+      .withSuccessHandler(function(data) {
+        btn.disabled = false;
+        
+        if(data && data.pix_key) {
+          res.innerHTML = `
+            <p style="color:green; font-weight:bold;">PIX Gerado!</p>
+            <div id="qrcode"></div>
+            <div style="font-size:10px; word-break:break-all; background:#f4f4f4; padding:8px; border-radius:5px; border:1px solid #ccc; max-height:50px; overflow-y:auto; font-family:monospace;">${data.pix_key}</div>
+            <button id="btn-copy" style="width:100%; margin-top:10px; padding:8px; cursor:pointer;">Copiar Código</button>
+          `;
+          
+          // Gerando o QRCode de forma limpa no container
+          document.getElementById("qrcode").innerHTML = "";
+          new QRCode(document.getElementById("qrcode"), { text: data.pix_key, width: 180, height: 180 });
+          
+          // Adiciona o evento de cópia
+          document.getElementById("btn-copy").onclick = function() {
+            navigator.clipboard.writeText(data.pix_key);
+            alert('Código copiado para a área de transferência!');
+          };
+          
+        } else {
+          // Captura e renderiza erros tratados vindos da API da TNP
+          res.innerHTML = "<p style='color:red'>Erro no retorno da API: " + (data.error || JSON.stringify(data)) + "</p>";
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        res.innerHTML = "<p style='color:red'>Erro crítico de execução no servidor Google: " + err.message + "</p>";
+      })
+      .gerarPixTNP(dadosEnvio);
+  }
+</script>
+</body>
+</html>
